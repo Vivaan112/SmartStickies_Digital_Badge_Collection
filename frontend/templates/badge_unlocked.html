@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Badge Unlocked! · SmartStickies{% endblock %}
+{% block content %}
+<div class="unlock-screen">
+  <div class="confetti">🎉</div>
+  <h1>Congratulations!</h1>
+  <p class="subtitle">
+    {% if item_name %}Your purchase of <strong>{{ item_name }}</strong> (${{ cost }}) unlocked{% else %}You unlocked{% endif %}
+    {{ "a new badge" if unlocked|length == 1 else (unlocked|length ~ " new badges") }}:
+  </p>
+
+  <div class="badge-grid unlock-grid">
+    {% for badge in unlocked %}
+      <div class="badge-card earned unlocked-badge">
+        <div class="badge-icon">🏅</div>
+        <div class="badge-name">{{ badge.name }}</div>
+        {% if badge.description %}<div class="badge-desc">{{ badge.description }}</div>{% endif %}
+        {% if badge.cert_info %}<div class="badge-info">{{ badge.cert_info }}</div>{% endif %}
+        {% if badge.fallback %}
+          <div class="badge-fallback-note">(showing raw backend data — /api/badges isn't returning full details right now)</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="unlock-actions">
+    <a href="{{ url_for('badges') }}" class="btn btn-primary">View updated collection</a>
+    <a href="{{ url_for('purchase') }}" class="btn btn-secondary">Keep shopping</a>
+  </div>
+</div>
+{% endblock %}
