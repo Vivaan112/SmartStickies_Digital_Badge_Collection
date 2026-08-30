@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Badge Collection · SmartStickies{% endblock %}
+{% block content %}
+<h1>Your Badge Collection</h1>
+
+{% if api_broken %}
+<div class="flash flash-error">
+  The badges API returned something the frontend didn't expect (it should be lists of badges).
+  This app can't display your real collection until that's fixed on the backend — see the
+  "Known backend issues" section of the README.
+</div>
+{% endif %}
+
+<section class="badge-section">
+  <h2>🏅 Earned Badges <span class="count">({{ earned|length }})</span></h2>
+  {% if earned %}
+    <div class="badge-grid">
+      {% for badge in earned %}
+        <div class="badge-card earned">
+          <div class="badge-icon">🏅</div>
+          <div class="badge-name">{{ badge.name or "Unnamed badge" }}</div>
+          <div class="badge-desc">{{ badge.description }}</div>
+          {% if badge.cert_info %}<div class="badge-info">{{ badge.cert_info }}</div>{% endif %}
+          {% if badge.certified_at %}<div class="badge-date">Earned {{ badge.certified_at }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty-state">No badges earned yet — head to the <a href="{{ url_for('purchase') }}">Purchase Demo</a> and start tapping!</p>
+  {% endif %}
+</section>
+
+<section class="badge-section">
+  <h2>🔒 Locked Badges <span class="count">({{ locked|length }})</span></h2>
+  {% if locked %}
+    <div class="badge-grid">
+      {% for badge in locked %}
+        <div class="badge-card locked">
+          <div class="badge-icon">🔒</div>
+          <div class="badge-name">{{ badge.name or "Unnamed badge" }}</div>
+          <div class="badge-desc">{{ badge.description }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty-state">Nothing left to unlock — you've collected them all!</p>
+  {% endif %}
+</section>
+{% endblock %}

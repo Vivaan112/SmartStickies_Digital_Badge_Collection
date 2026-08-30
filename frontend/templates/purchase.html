@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Purchase Demo · SmartStickies{% endblock %}
+{% block content %}
+<h1>Purchase Demo</h1>
+<p class="subtitle">Simulate a checkout the way a customer would after tapping an NFC sticker on a product.</p>
+
+<div class="item-grid">
+  {% for item in items %}
+    <div class="item-card">
+      <div class="item-emoji">{{ item.emoji }}</div>
+      <div class="item-name">{{ item.name }}</div>
+      <div class="item-price">${{ item.cost }}</div>
+      <form method="post" action="{{ url_for('buy_item') }}">
+        <input type="hidden" name="item_name" value="{{ item.name }}">
+        <input type="hidden" name="cost" value="{{ item.cost }}">
+        <button type="submit" class="btn btn-primary">Buy</button>
+      </form>
+    </div>
+  {% endfor %}
+</div>
+
+<section class="custom-purchase">
+  <h2>Custom purchase</h2>
+  <form method="post" action="{{ url_for('buy_item') }}" class="form form-inline">
+    <input type="text" name="item_name" placeholder="Item name" required>
+    <input type="number" name="cost" placeholder="Cost" step="0.01" min="0" required>
+    <button type="submit" class="btn btn-secondary">Buy</button>
+  </form>
+</section>
+{% endblock %}
