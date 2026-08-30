@@ -1,9 +1,9 @@
 defmodule BadgeCollectorWeb.ActionController do
   use BadgeCollectorWeb, :controller
 
-  alias BadgeCollector.{Action, Certifier}
+  alias BadgeCollector.{Action, Certifier, Tap}
 
-  @supported_types ~w(login buy_item)
+  @supported_types ~w(login buy_item tap)
 
   def create(conn, %{"action" => action_type, "data" => data})
       when action_type in @supported_types do
@@ -36,6 +36,13 @@ defmodule BadgeCollectorWeb.ActionController do
   end
 
   defp validate_data("login", _data), do: :ok
+
+  defp validate_data("tap", data) do
+    case Tap.parse_data(data) do
+      {:ok, _tap} -> :ok
+      :error -> {:error, ~s(data must be JSON with a "product_id" string and a "tags" list)}
+    end
+  end
 
   defp validate_data("buy_item", data) do
     case Action.parse_purchase(%Action{type: "buy_item", data: data}) do

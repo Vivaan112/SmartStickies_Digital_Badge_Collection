@@ -8,8 +8,15 @@ defmodule BadgeCollector.Certifier do
   @certifiers [
     BadgeCollector.Certifiers.LoginStreakCertifier,
     BadgeCollector.Certifiers.PurchaseCountCertifier,
-    BadgeCollector.Certifiers.TotalSpentCertifier
+    BadgeCollector.Certifiers.TotalSpentCertifier,
+    BadgeCollector.Certifiers.TagCountCertifier,
+    BadgeCollector.Certifiers.TapCountCertifier,
+    BadgeCollector.Certifiers.LocationCountCertifier,
+    BadgeCollector.Certifiers.BadgeCountCertifier,
+    BadgeCollector.Certifiers.CollectionCertifier
   ]
+
+  @meta_types ~w(badge_count collection_complete)
 
   @spec registry() :: %{String.t() => module()}
   defp registry, do: Map.new(@certifiers, &{&1.handles(), &1})
@@ -22,6 +29,7 @@ defmodule BadgeCollector.Certifier do
     user
     |> User.unearned_badges(true)
     |> Enum.group_by(& &1.unlock_type)
+    |> Enum.sort_by(fn {unlock_type, _badges} -> unlock_type in @meta_types end)
     |> Enum.flat_map(fn {unlock_type, badges} ->
       with {:ok, certifier} <- Map.fetch(registry, unlock_type),
            true <- certifier.relavent_action?(action)
@@ -41,4 +49,35 @@ defmodule BadgeCollector.Certifier do
       {:error, _errors} -> nil
     end
   end
+
+  @doc "unlock_args is JSON. A malformed value is a seeding mistake, so it
+  raises rather than silently never awarding the badge."
+  @spec parse_args(Badge.t()) :: map()
+  def parse_args(%Badge{unlock_args: nil}), do: %{}
+
+  def parse_args(%Badge{unlock_args: unlock_args, name: name}) do
+    case Jason.decode(unlock_args) do
+      {:ok, args} when is_map(args) ->
+        args
+
+      _ ->
+        raise ArgumentError,
+              "badge #{inspect(name)} has unparseable unlock_args: #{inspect(unlock_args)}"
+    end
+  end
+
+  @spec required_count(map(), Badge.t()) :: non_neg_integer()
+  def required_count(args, %Badge{name: name}) do
+    case Map.get(args, "count", 1) do
+      count when is_integer(count) and count >= 0 ->
+        count
+
+      other ->
+        raise ArgumentError,
+              "badge #{inspect(name)} needs an integer count, got: #{inspect(other)}"
+    end
+  end
+
+  @spec meta_types() :: [String.t()]
+  def meta_types, do: @meta_types
 end

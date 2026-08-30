@@ -11,11 +11,12 @@ defmodule BadgeCollector.Badge do
     field :hidden, :boolean, default: false # hide the badge if it has not been unlocked
     field :certified_at, :naive_datetime, virtual: true
     field :cert_info, :string, virtual: true
+    field :collection, :string
   end
 
   def changeset(badge, attrs) do
     badge
-    |> cast(attrs, [:name, :unlock_type, :unlock_args, :hidden])
+    |> cast(attrs, [:name, :unlock_type, :unlock_args, :hidden, :collection])
     |> validate_required([:name, :unlock_type])
   end
 
@@ -25,6 +26,7 @@ defmodule BadgeCollector.Badge do
       name: badge.name,
       unlock_type: badge.unlock_type,
       unlock_args: badge.unlock_args,
+      collection: badge.collection,
       certified_at: badge.certified_at,
       cert_info: badge.cert_info,
       earned?: not is_nil(badge.certified_at)

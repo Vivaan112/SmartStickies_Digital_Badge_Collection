@@ -1,5 +1,5 @@
 alias BadgeCollector.Repo
-alias BadgeCollector.{Action, Badge, Certifier, User}
+alias BadgeCollector.{Badge, User}
 
 upsert_user = fn email, password ->
   case Repo.get_by(User, email: email) do
@@ -20,71 +20,63 @@ upsert_badge = fn attrs ->
   end
 end
 
-jane = upsert_user.("jane@example.com", "correcthorsebatterystaple")
-_john = upsert_user.("john@example.com", "hunter22222")
+upsert_user.("jane@example.com", "correcthorsebatterystaple")
+upsert_user.("john@example.com", "hunter22222")
 
-# unlock_type must match a certifier's handles/0, or the badge can never be
-# earned. login_streak and purchase_count take whole numbers; total_spent is
-# read with String.to_float/1, so it needs a decimal point.
-upsert_badge.(%{name: "Showed Up", unlock_type: "login_streak", unlock_args: "1"})
-upsert_badge.(%{name: "Three Day Habit", unlock_type: "login_streak", unlock_args: "3"})
-upsert_badge.(%{name: "One Week Streak", unlock_type: "login_streak", unlock_args: "7"})
-upsert_badge.(%{name: "First Purchase", unlock_type: "purchase_count", unlock_args: "1"})
-upsert_badge.(%{name: "Bought Ten Items", unlock_type: "purchase_count", unlock_args: "10"})
-upsert_badge.(%{name: "Spent Fifty", unlock_type: "total_spent", unlock_args: "50.0"})
+# unlock_args is JSON. tag_count takes an optional "tag" (omit it to count any
+# product) and an optional "context" filter, plus a required "count".
+badges = [
+  # --- category badges -------------------------------------------------------
+  %{name: "Dairy Explorer", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"dairy","count":3})},
+  %{name: "Chocolate Collector", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"chocolate","count":5})},
+  %{name: "Beverage Explorer", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"beverage","count":5})},
+  %{name: "Healthy Choices", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"healthy","count":5})},
+  %{name: "Snack Collector", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"snack","count":5})},
+  %{name: "Sweet Tooth", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"sweet","count":5})},
+  %{name: "Coffee Explorer", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"coffee","count":3})},
+  %{name: "Foodie", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"food","count":10})},
+  %{name: "Fresh Finds", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"fresh","count":5})},
 
-# hidden badges stay out of the "missing" list until they are earned
-upsert_badge.(%{
-  name: "Mystery Collector",
-  unlock_type: "purchase_count",
-  unlock_args: "25",
-  hidden: true
-})
+  # --- product and context badges --------------------------------------------
+  %{name: "Product Hunter", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"count":10})},
+  %{name: "Shopping Explorer", collection: "core",
+    unlock_type: "tag_count", unlock_args: ~s({"context":"shopping","count":5})},
+  %{name: "Rare Find", collection: "core", hidden: true,
+    unlock_type: "tag_count", unlock_args: ~s({"tag":"rare_find","count":1})},
 
-# no certifier claims this unlock_type, so it can never be earned - it exists to
-# prove the dispatch loop skips unknown types instead of crashing
-upsert_badge.(%{
-  name: "Retired Badge",
-  unlock_type: "disabled",
-  unlock_args: nil,
-  hidden: true
-})
+  # --- raw tap counts --------------------------------------------------------
+  %{name: "First Tap", collection: "core",
+    unlock_type: "tap_count", unlock_args: ~s({"count":1})},
+  %{name: "Tap Master", collection: "core",
+    unlock_type: "tap_count", unlock_args: ~s({"count":10})},
+  %{name: "Tap Champion", collection: "core",
+    unlock_type: "tap_count", unlock_args: ~s({"count":25})},
 
-# --- give jane some history so the API has something to show ------------------
+  # --- locations -------------------------------------------------------------
+  %{name: "Explorer", collection: "core",
+    unlock_type: "location_count", unlock_args: ~s({"count":5})},
+  %{name: "World Explorer", collection: "core",
+    unlock_type: "location_count", unlock_args: ~s({"count":10})},
 
-if Repo.aggregate(Action, :count) == 0 do
-  for days_ago <- 6..1//-1 do
-    at =
-      NaiveDateTime.utc_now()
-      |> NaiveDateTime.add(-days_ago * 86_400, :second)
-      |> NaiveDateTime.truncate(:second)
+  # --- meta badges, deliberately outside "core" so Completionist is reachable -
+  %{name: "Collection Starter",
+    unlock_type: "badge_count", unlock_args: ~s({"count":3})},
+  %{name: "Master Collector",
+    unlock_type: "badge_count", unlock_args: ~s({"count":10})},
+  %{name: "Completionist",
+    unlock_type: "collection_complete", unlock_args: ~s({"collection":"core"})}
+]
 
-    Repo.insert!(%Action{
-      type: "login",
-      data: "",
-      user_id: jane.id,
-      inserted_at: at,
-      updated_at: at
-    })
-  end
+for attrs <- badges, do: upsert_badge.(attrs)
 
-  for {item, cost} <- [
-        {"blue sticker", "4.50"},
-        {"gold star", "12.00"},
-        {"holographic cat", "21.25"},
-        {"enamel pin", "15.00"}
-      ] do
-    Repo.insert!(%Action{type: "buy_item", data: "#{item}|#{cost}", user_id: jane.id})
-  end
-
-  # today's login closes a seven day streak; run it through the real pipeline
-  today = Repo.insert!(%Action{type: "login", data: "", user_id: jane.id})
-  earned = Certifier.run(today, jane)
-
-  IO.puts("seeded #{jane.email} with #{length(earned)} badge(s) from her login streak")
-
-  purchase = Repo.insert!(%Action{type: "buy_item", data: "mystery box|9.99", user_id: jane.id})
-  earned = Certifier.run(purchase, jane)
-
-  IO.puts("seeded #{jane.email} with #{length(earned)} badge(s) from her purchases")
-end
+IO.puts("seeded #{length(badges)} badges")
