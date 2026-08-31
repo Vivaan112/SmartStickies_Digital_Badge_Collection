@@ -1,4 +1,5 @@
 import Config
+import Dotenvy
 
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
@@ -19,6 +20,19 @@ import Config
 if System.get_env("PHX_SERVER") do
   config :badge_collector, BadgeCollectorWeb.Endpoint, server: true
 end
+
+env_dir_prefix = Path.expand("..", __DIR__)
+
+source!([
+  Path.absname(".env", env_dir_prefix),
+  Path.absname("#{config_env()}.env", env_dir_prefix),
+  System.get_env()
+],
+  require_files: [Path.absname(".env", env_dir_prefix)])
+
+config :badge_collector, BadgeCollector.Guardian,
+  issuer: "BadgeCollector",
+  secret_key: env!("GUARDIAN")
 
 if config_env() == :prod do
   database_url =
