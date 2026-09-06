@@ -2,3 +2,13 @@
 <button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">
   Log In
 </button>
+
+<!-- This is my signup button -->
+<button class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">
+  Sign In
+</button>
+
+<!-- This is my signup button -->
+<button class="bg-blue-500 text-white px-5 py-2 rounded-lg hover:bg-blue-700">
+  Purchase
+</button>
