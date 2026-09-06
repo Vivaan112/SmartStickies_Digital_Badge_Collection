@@ -110,3 +110,37 @@
   placeholder="Search..."
   class="border p-2 rounded-lg"
 >
+
+<!--Unlocked Badge(s)--!>
+<div class="rounded-2xl border bg-white p-6 text-center shadow-sm">
+
+    <div class="mb-4 text-5xl">
+        🏅
+    </div>
+
+    <h3 class="text-xl font-bold text-gray-900">
+        First Purchase
+    </h3>
+
+    <p class="mt-2 text-sm text-gray-500">
+        Completed first purchase
+    </p>
+
+</div>
+
+<!--Locked Badge(s)--!>
+<div class="rounded-2xl border bg-gray-100 p-6 text-center opacity-60">
+
+    <div class="mb-4 text-5xl">
+        🔒
+    </div>
+
+    <h3 class="text-xl font-bold text-gray-700">
+        Explorer
+    </h3>
+
+    <p class="mt-2 text-sm text-gray-500">
+        Locked
+    </p>
+
+</div>
