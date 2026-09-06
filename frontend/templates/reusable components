@@ -32,6 +32,8 @@
   Info:
 </div>
 
+
+
 <!--This the button pop up--!>
 <div
     id="badge-popup"
@@ -80,3 +82,31 @@
 </div>
 
 <!--These are the inputs--!>
+
+
+
+<!--These are inputs-->
+<input
+  type="text"
+  placeholder="Enter your name"
+  class="border p-2 rounded-lg"
+>
+
+<input
+  type="email"
+  placeholder="Enter your email"
+  class="border p-2 rounded-lg"
+>
+
+<input
+  type="password"
+  placeholder="Enter your password"
+  class="border p-2 rounded-lg"
+  
+>
+
+<input
+  type="search"
+  placeholder="Search..."
+  class="border p-2 rounded-lg"
+>
